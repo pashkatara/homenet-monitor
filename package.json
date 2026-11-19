@@ -1,0 +1,26 @@
+{
+  "name": "homenet-monitor",
+  "version": "1.0.0",
+  "description": "Self-hosted network monitoring dashboard, topology visualizer, and host telemetry system",
+  "main": "server.js",
+  "keywords": [
+    "network-monitor",
+    "dashboard",
+    "keenetic",
+    "openwrt",
+    "docker",
+    "telegram-bot",
+    "model-context-protocol",
+    "topology",
+    "vds-monitor",
+    "self-hosted"
+  ],
+  "author": "Open Source Community",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

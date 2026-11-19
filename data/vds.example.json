@@ -1,0 +1,34 @@
+[
+  {
+    "id": "vds_demo_1",
+    "name": "Cloud-VDS-Demo",
+    "os": "Ubuntu 22.04 LTS",
+    "ip": "198.51.100.10",
+    "port": 22,
+    "user": "root",
+    "pass": "",
+    "status": "offline",
+    "ping": "—",
+    "uptime": "14д 06ч",
+    "cpu": 8,
+    "cores": 2,
+    "loadAvg": "0.12",
+    "ramUsed": 1.2,
+    "ramTotal": 4,
+    "diskUsed": 15,
+    "diskTotal": 50,
+    "netDown": 120,
+    "netUp": 85,
+    "services": [
+      {
+        "name": "sshd",
+        "ok": true
+      },
+      {
+        "name": "docker",
+        "ok": true
+      }
+    ],
+    "tgEnabled": false
+  }
+]

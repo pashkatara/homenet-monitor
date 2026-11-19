@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Runtime data & secrets
+.env
+data/settings.json
+data/devices.json
+data/vds.json
+data/events.json
+host_history.json
+cpu_temp_history.json
+data/host_history.json
+data/cpu_temp_history.json
+
+# Keep example data in git
+!data/*.example.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS artifacts
+.DS_Store
+Thumbs.db

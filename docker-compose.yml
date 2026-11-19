@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  homenet-monitor:
+    build: .
+    container_name: homenet-monitor
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PORT=3001
+      - TZ=Europe/Moscow
+      - SUBNET_PREFIX=192.168.1.
+      - GATEWAY_IP=192.168.1.1
+      - ROUTER_TYPE=keenetic # keenetic | openwrt | none
+      - ROUTER_IP=192.168.1.1
+      - ROUTER_USER=admin
+      - ROUTER_PASS=
+      # Опционально: креды для сбора Docker-статистики хост-сервера по SSH
+      # - HOST_SSH_USER=admin
+      # - HOST_SSH_PASS=secret
+      # - HOST_SSH_IP=127.0.0.1
+    volumes:
+      - ./data:/app/data
+      # Для прямого чтения датчиков температуры процессора Linux
+      - /sys/class/hwmon:/sys/class/hwmon:ro
+      # Для чтения статистики Docker-контейнеров локального сервера
+      - /var/run/docker.sock:/var/run/docker.sock:ro
