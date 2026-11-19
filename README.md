@@ -106,7 +106,7 @@ HomeNet Monitor — это лёгкий self-hosted веб-интерфейс, �
 ### Вариант 1: Docker Compose (рекомендуется)
 
 ```bash
-git clone https://github.com/<your-username>/homenet-monitor.git
+git clone https://github.com/pashkatara/homenet-monitor.git
 cd homenet-monitor
 cp .env.example .env
 nano .env                 # обязательно задайте SUBNET_PREFIX и GATEWAY_IP
@@ -118,7 +118,7 @@ docker compose up -d
 ### Вариант 2: Node.js без Docker
 
 ```bash
-git clone https://github.com/<your-username>/homenet-monitor.git
+git clone https://github.com/pashkatara/homenet-monitor.git
 cd homenet-monitor
 cp .env.example .env
 node server.js
