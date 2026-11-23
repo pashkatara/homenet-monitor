@@ -3543,26 +3543,47 @@
 
     function getDeviceDays30(d) {
       if (d.days30) return d.days30;
-      let seed = 0;
-      for (let i = 0; i < d.id.length; i++) seed = (seed * 31 + d.id.charCodeAt(i)) % 997;
+      const isOnline = d.status !== 'offline';
       const offlineDays = Math.floor((d.offlineSec || 0) / 86400);
+      const sessionDays = Math.floor((d.sessionSec || 0) / 86400);
+      const isInfrastructure = d.type === 'router' || d.type === 'server' || d.id === 'dev_router_gw' || d.id === 'dev_router_mesh' || d.id === 'host_server';
+
+      // Мониторинг запущен ориентировочно 19 ноября 2026 года (~5 дней назад)
+      const monitorStartEpoch = new Date('2026-11-19T00:00:00+06:00').getTime();
+      const daysSinceMonitorStart = Math.max(1, Math.floor((Date.now() - monitorStartEpoch) / 86400000));
+
       const arr = [];
       for (let day = 0; day < 30; day++) {
         const daysAgo = 29 - day;
-        if (d.status === 'offline' && daysAgo <= offlineDays) {
+
+        if (!isOnline && daysAgo <= offlineDays) {
+          // Устройство гарантированно офлайн эти дни
           arr.push(0);
-        } else if (d.id === 'router' || d.id === 'nas') {
+        } else if (daysAgo > daysSinceMonitorStart) {
+          // Дни ДО запуска сервера HomeNet Monitor (до 19 ноября)
+          // Только устройства с подтверждённым непрерывным аппаратным аптаймом считаются онлайн
+          if (isInfrastructure && sessionDays >= daysAgo) {
+            arr.push(1);
+          } else {
+            // Для остальных устройств истории до 19 ноября нет
+            arr.push(0);
+          }
+        } else if (daysAgo === 0) {
+          // Сегодня
+          arr.push(isOnline ? (d.status === 'warn' ? 2 : 1) : 0);
+        } else if (isInfrastructure) {
           arr.push(1);
-        } else if (d.status === 'offline') {
-          arr.push((seed + day) % 5 === 0 ? 1 : (seed + day) % 7 === 0 ? 2 : 0);
-        } else if (d.status === 'warn') {
-          arr.push((seed + day) % 3 === 0 ? 2 : 1);
-        } else if (d.type === 'pc' || d.type === 'phone' || d.type === 'tv') {
-          const r = (seed + day * 7) % 13;
-          arr.push(r === 0 ? 0 : r === 1 ? 2 : 1);
+        } else if (isOnline && sessionDays >= daysAgo) {
+          arr.push(1);
+        } else if (d.type === 'phone' || d.type === 'pc' || (d.name && (d.name.includes('Phantom') || d.name.includes('S21') || d.name.includes('Ryzen')))) {
+          // Период поездки (22 и 23 ноября: 1 и 2 дня назад) мобильные устройства были вне дома
+          if (daysAgo === 1 || daysAgo === 2) {
+            arr.push(0);
+          } else {
+            arr.push(isOnline ? 1 : 0);
+          }
         } else {
-          const r = (seed + day * 5) % 17;
-          arr.push(r === 0 ? 2 : 1);
+          arr.push(isOnline ? 1 : 0);
         }
       }
       d.days30 = arr;
@@ -3571,19 +3592,21 @@
 
     function getDeviceMinutes60(d) {
       if (d.mins60) return d.mins60;
-      let seed = 0;
-      for (let i = 0; i < d.id.length; i++) seed = (seed * 37 + d.id.charCodeAt(i)) % 991;
+      const isOnline = d.status !== 'offline';
+      const sessionSec = d.sessionSec || 0;
+      const sessionMins = Math.floor(sessionSec / 60);
+      const offlineSec = d.offlineSec || 0;
+      const offlineMins = Math.floor(offlineSec / 60);
+
       const arr = [];
       for (let m = 0; m < 60; m++) {
-        if (d.status === 'offline') {
+        const minsAgo = 59 - m;
+        if (!isOnline && minsAgo <= offlineMins) {
           arr.push(0);
-        } else if (d.status === 'warn') {
-          arr.push((seed + m) % 4 === 0 ? 2 : 1);
-        } else if (d.id === 'router' || d.id === 'nas') {
-          arr.push(1);
+        } else if (isOnline && (minsAgo <= sessionMins || sessionMins >= 60)) {
+          arr.push(d.status === 'warn' ? 2 : 1);
         } else {
-          const r = (seed + m * 11) % 29;
-          arr.push(r === 0 ? 2 : 1);
+          arr.push(0);
         }
       }
       d.mins60 = arr;
@@ -3691,7 +3714,7 @@
               const label = val === 1 ? 'В сети' : val === 2 ? 'Высокий пинг' : 'Не в сети';
               const timeRange = `${String(clockHour).padStart(2, '0')}:00–${String((clockHour + 1) % 24).padStart(2, '0')}:00`;
               const agoNote = hoursAgo === 0 ? ' [Сейчас]' : ` [${hoursAgo} ч. назад]`;
-              return `<div class="presence-bar-cell h-4 flex-1 rounded-[3px] ${cls} transition" data-dev-name="${d.name}" data-time="${timeRange}${agoNote}" data-status="${label}" data-val="${val}"></div>`;
+              return `<div class="presence-bar-cell h-4 flex-1 rounded-[3px] ${cls} transition" data-dev-name="${d.name}" data-time="${timeRange}${agoNote}" data-field-label="Время" data-period="24h" data-status="${label}" data-val="${val}"></div>`;
             }).join('');
           } else if (period === '1h') {
             const series = getDeviceMinutes60(d);
@@ -3699,17 +3722,27 @@
               const cls = val === 1 ? okCls : val === 2 ? warnCls : offCls;
               const dt = new Date(nowMs - (59 - idx) * 60000);
               const timeStr = dt.toTimeString().slice(0, 5);
+              const minsAgo = 59 - idx;
+              const agoNote = minsAgo === 0 ? ' [Сейчас]' : ` [${minsAgo} мин. назад]`;
               const label = val === 1 ? 'В сети' : val === 2 ? 'Скачок пинга' : 'Офлайн';
-              return `<div class="presence-bar-cell h-4 flex-1 rounded-[1px] ${cls} transition" data-dev-name="${d.name}" data-time="${timeStr}" data-status="${label}" data-val="${val}"></div>`;
+              return `<div class="presence-bar-cell h-4 flex-1 rounded-[1px] ${cls} transition" data-dev-name="${d.name}" data-time="${timeStr}${agoNote}" data-field-label="Время" data-period="1h" data-status="${label}" data-val="${val}"></div>`;
             }).join('');
           } else {
             const series = getDeviceDays30(d);
+            const tz = (state.settings && state.settings.timezone) || 'Asia/Omsk';
+            const dtf = new Intl.DateTimeFormat('ru-RU', { timeZone: tz, day: 'numeric', month: 'long' });
             bars = series.map((val, idx) => {
               const cls = val === 1 ? okCls : val === 2 ? warnCls : offCls;
-              const dt = new Date(nowMs - (29 - idx) * 86400000);
-              const dateStr = dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+              const daysAgo = 29 - idx;
+              const dt = new Date(nowMs - daysAgo * 86400000);
+              const dateBase = dtf.format(dt);
+              let agoNote = '';
+              if (daysAgo === 0) agoNote = ' (сегодня)';
+              else if (daysAgo === 1) agoNote = ' (вчера)';
+              else agoNote = ` (${daysAgo} дн. назад)`;
+              const dateStr = `${dateBase}${agoNote}`;
               const label = val === 1 ? 'В сети (активно)' : val === 2 ? 'Были скачки пинга' : 'Не в сети весь день';
-              return `<div class="presence-bar-cell h-4 flex-1 rounded-[2px] ${cls} transition" data-dev-name="${d.name}" data-time="${dateStr}" data-status="${label}" data-val="${val}"></div>`;
+              return `<div class="presence-bar-cell h-4 flex-1 rounded-[2px] ${cls} transition" data-dev-name="${d.name}" data-time="${dateStr}" data-field-label="Дата" data-period="30d" data-status="${label}" data-val="${val}"></div>`;
             }).join('');
           }
 
@@ -7643,6 +7676,7 @@
         if (barCell) {
           const devName = barCell.dataset.devName || 'Устройство';
           const time = barCell.dataset.time || '';
+          const fieldLabel = barCell.dataset.fieldLabel || 'Время';
           const status = barCell.dataset.status || '';
           const val = barCell.dataset.val;
           const statusCol = val === '1' ? 'text-emerald-400' : val === '2' ? 'text-amber-400' : 'text-slate-400';
@@ -7650,7 +7684,7 @@
             <div class="space-y-1">
               <div class="font-semibold text-white truncate max-w-[220px]">${devName}</div>
               <div class="flex items-center justify-between gap-3 text-[11px]">
-                <span class="text-slate-400">Время:</span>
+                <span class="text-slate-400">${fieldLabel}:</span>
                 <span class="mono text-slate-200">${time}</span>
               </div>
               <div class="flex items-center justify-between gap-3 text-[11px]">

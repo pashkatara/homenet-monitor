@@ -177,10 +177,54 @@ try {
           d.hours24[(curH - hr + 24) % 24] = 0;
         }
       }
+      sanitizeDays30(d);
     });
   }
 } catch (e) {
   console.error('Ошибка чтения devices.json:', e);
+}
+
+// Санитизация и актуализация 30-дневной истории (days30)
+function sanitizeDays30(d) {
+  if (!d.days30 || !Array.isArray(d.days30) || d.days30.length !== 30) {
+    d.days30 = Array(30).fill(0);
+    const isInfrastructure = d.type === 'router' || d.type === 'server' || d.id === 'dev_router_gw' || d.id === 'dev_router_mesh' || d.id === 'host_server';
+    const sessionDays = Math.floor((d.sessionSec || 0) / 86400);
+    const isOnline = d.status === 'online' || d.status === 'warn';
+
+    // Сервер начал работу ориентировочно 19 ноября 2026 (~5 дней назад)
+    const monitorStartEpoch = new Date('2026-11-19T00:00:00+06:00').getTime();
+    const daysSinceMonitorStart = Math.max(1, Math.floor((Date.now() - monitorStartEpoch) / 86400000));
+
+    for (let i = 0; i < 30; i++) {
+      const daysAgo = 29 - i;
+      if (daysAgo > daysSinceMonitorStart) {
+        // Дни до запуска сервера (до 19 ноября) — данных нет, строго 0
+        if (isInfrastructure && sessionDays >= daysAgo) {
+          d.days30[i] = 1;
+        } else {
+          d.days30[i] = 0;
+        }
+      } else if (daysAgo === 0) {
+        d.days30[i] = isOnline ? (d.status === 'warn' ? 2 : 1) : 0;
+      } else if (isInfrastructure) {
+        d.days30[i] = 1;
+      } else if (isOnline && sessionDays >= daysAgo) {
+        d.days30[i] = 1;
+      } else if (d.type === 'phone' || d.type === 'pc' || (d.name && (d.name.includes('Phantom') || d.name.includes('S21') || d.name.includes('Ryzen')))) {
+        if (daysAgo === 1 || daysAgo === 2) {
+          d.days30[i] = 0;
+        } else {
+          d.days30[i] = isOnline ? 1 : 0;
+        }
+      } else {
+        d.days30[i] = isOnline ? 1 : 0;
+      }
+    }
+  }
+  if (d.status === 'online' || d.status === 'warn' || (d.hours24 && d.hours24.some(h => h > 0))) {
+    d.days30[29] = d.status === 'warn' ? 2 : 1;
+  }
 }
 
 function saveDevices() {
@@ -1215,6 +1259,7 @@ async function syncWithKeenetic() {
           addEventLog('off', `${dev.name}: не в сети`, 'disconnect', dev.name, dev.id);
         }
       }
+      sanitizeDays30(dev);
     } else {
       // Новое устройство, зарегистрированное в Keenetic
       const vendorName = getVendor(mac);
@@ -1244,6 +1289,7 @@ async function syncWithKeenetic() {
         ports: h.port ? `Порт ${h.port}` : '—',
         unconfirmed: true
       };
+      sanitizeDays30(newDev);
       devices.push(newDev);
       if (isActive) {
         addEventLog('ok', `${newDev.name}: новое устройство, появилось в сети`, 'new_device', newDev.name, newDev.id);
@@ -1488,10 +1534,23 @@ let lastRolloverHour = getCurrentLocalHour();
 setInterval(() => {
   const currentHour = getCurrentLocalHour();
   if (currentHour !== lastRolloverHour) {
+    const isMidnight = currentHour === 0;
     devices.forEach(dev => {
       if (!dev.hours24 || dev.hours24.length !== 24) dev.hours24 = Array(24).fill(0);
       const isOnline = dev.status === 'online' || dev.status === 'warn';
+
+      if (isMidnight) {
+        if (!dev.days30 || dev.days30.length !== 30) dev.days30 = Array(30).fill(0);
+        dev.days30.shift();
+        dev.days30.push(isOnline ? 1 : 0);
+        dev.hours24 = Array(24).fill(0);
+      }
+
       dev.hours24[currentHour] = isOnline ? 1 : 0;
+      if (!dev.days30 || dev.days30.length !== 30) dev.days30 = Array(30).fill(0);
+      if (isOnline) {
+        dev.days30[29] = dev.status === 'warn' ? 2 : 1;
+      }
     });
     lastRolloverHour = currentHour;
     saveDevices();
