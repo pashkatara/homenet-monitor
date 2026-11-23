@@ -1163,7 +1163,24 @@ async function syncWithKeenetic() {
           }
         }
 
+        // Если роутер зафиксировал появление устройства менее 24 часов назад,
+        // все часы ДО первого обнаружения (first-seen) гарантированно были оффлайн (0)
+        const rawFirstSeen = h['first-seen'] !== undefined ? h['first-seen'] : h.firstSeen;
+        const firstSeenSec = rawFirstSeen !== undefined ? rawFirstSeen : (dev.sessionSec || 0);
+        if (firstSeenSec < 86400) {
+          const firstSeenHours = Math.ceil(firstSeenSec / 3600);
+          for (let hr = firstSeenHours + 1; hr < 24; hr++) {
+            const pastHour = (currentHour - hr + 24) % 24;
+            dev.hours24[pastHour] = 0;
+          }
+        }
+
         if (prevStatus === 'offline') {
+          const offHours = Math.min(24, Math.floor((dev.offlineSec || 0) / 3600));
+          for (let hr = 1; hr <= offHours; hr++) {
+            const pastHour = (currentHour - hr + 24) % 24;
+            dev.hours24[pastHour] = 0;
+          }
           addEventLog('ok', `${dev.name}: появился в сети`, 'connect', dev.name, dev.id);
         }
       } else {
