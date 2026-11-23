@@ -135,6 +135,22 @@ function getLocalTimeInfo(date = new Date()) {
   }
 }
 
+// Получение текущего часа с учётом настроенного часового пояса (по умолчанию Asia/Omsk)
+function getCurrentLocalHour(date = new Date()) {
+  const tz = appSettings.timezone || process.env.TZ || 'Asia/Omsk';
+  try {
+    const dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hour: 'numeric',
+      hour12: false
+    });
+    const h = parseInt(dtf.format(date), 10);
+    return h === 24 ? 0 : (h % 24);
+  } catch (e) {
+    return date.getHours();
+  }
+}
+
 // 1. Хранилище устройств
 let devices = [];
 try {
@@ -150,7 +166,7 @@ try {
     });
 
     // Санитизация истории присутствия (hours24) с учетом реального времени оффлайна
-    const curH = new Date().getHours();
+    const curH = getCurrentLocalHour();
     devices.forEach(d => {
       if (!d.hours24 || !Array.isArray(d.hours24) || d.hours24.length !== 24) {
         d.hours24 = Array(24).fill(0);
@@ -1036,7 +1052,7 @@ async function syncWithOpenWrt() {
   try {
     const clients = await fetchOpenWrtClients();
     if (!clients || !Array.isArray(clients)) return;
-    const currentHour = new Date().getHours();
+    const currentHour = getCurrentLocalHour();
     const routerIp = appSettings.routerIp || GATEWAY_IP;
 
     // Шлюз OpenWrt
@@ -1094,7 +1110,7 @@ async function syncWithKeenetic() {
   const hotspot = await fetchKeeneticHotspot();
   if (!hotspot || !Array.isArray(hotspot.host)) return;
 
-  const currentHour = new Date().getHours();
+  const currentHour = getCurrentLocalHour();
   const hosts = hotspot.host;
   const keeneticMacs = new Set();
 
@@ -1369,7 +1385,7 @@ const priorityFails = {};
 // Уровень А: Приоритетный опрос (каждые 3 сек для устройств со 'Следить' / FastPing)
 setInterval(async () => {
   if (devices.length === 0 || state.isScanning) return;
-  const currentHour = new Date().getHours();
+  const currentHour = getCurrentLocalHour();
 
   // Отбираем устройства с включенным быстрым пингом (строго fastPing === true)
   const watchedDevs = devices.filter(d => d.ip && d.ip.startsWith(SUBNET_PREFIX) && d.tgWatch && d.tgWatch.fastPing === true);
@@ -1424,7 +1440,7 @@ setInterval(async () => {
 let checkIdx = 0;
 setInterval(async () => {
   if (devices.length === 0 || state.isScanning) return;
-  const currentHour = new Date().getHours();
+  const currentHour = getCurrentLocalHour();
 
   // Опрашиваем устройства с локальными IP, исключая те, что уже проверяются в Уровне А
   const regularList = devices.filter(d => d.ip && d.ip.startsWith(SUBNET_PREFIX) && !(d.tgWatch && d.tgWatch.fastPing === true));
@@ -1468,9 +1484,9 @@ setInterval(async () => {
 }, 2000);
 
 // Ежечасный сброс слота карты присутствия при переходе часа
-let lastRolloverHour = new Date().getHours();
+let lastRolloverHour = getCurrentLocalHour();
 setInterval(() => {
-  const currentHour = new Date().getHours();
+  const currentHour = getCurrentLocalHour();
   if (currentHour !== lastRolloverHour) {
     devices.forEach(dev => {
       if (!dev.hours24 || dev.hours24.length !== 24) dev.hours24 = Array(24).fill(0);

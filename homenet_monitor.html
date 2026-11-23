@@ -3592,7 +3592,14 @@
 
     function getDevice24hRelative(d) {
       // 24 часа в относительном порядке: от "23 часа назад" (индекс 0) до "Текущий час" (индекс 23)
-      const currentHour = new Date().getHours();
+      let currentHour = new Date().getHours();
+      if (state.settings && state.settings.timezone) {
+        try {
+          const dtf = new Intl.DateTimeFormat('en-US', { timeZone: state.settings.timezone, hour: 'numeric', hour12: false });
+          const h = parseInt(dtf.format(new Date()), 10);
+          currentHour = h === 24 ? 0 : (h % 24);
+        } catch (e) {}
+      }
       const raw24 = Array.isArray(d.hours24) && d.hours24.length === 24 ? d.hours24 : Array(24).fill(0);
       const isOnline = d.status !== 'offline';
       const sessionSec = d.sessionSec || 0;
