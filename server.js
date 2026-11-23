@@ -148,6 +148,20 @@ try {
       uniqueMacs.add(m);
       return true;
     });
+
+    // Санитизация истории присутствия (hours24) с учетом реального времени оффлайна
+    const curH = new Date().getHours();
+    devices.forEach(d => {
+      if (!d.hours24 || !Array.isArray(d.hours24) || d.hours24.length !== 24) {
+        d.hours24 = Array(24).fill(0);
+      }
+      if (d.status === 'offline') {
+        const offHours = Math.min(24, Math.floor((d.offlineSec || 0) / 3600));
+        for (let hr = 0; hr <= offHours; hr++) {
+          d.hours24[(curH - hr + 24) % 24] = 0;
+        }
+      }
+    });
   }
 } catch (e) {
   console.error('Ошибка чтения devices.json:', e);
@@ -1155,6 +1169,15 @@ async function syncWithKeenetic() {
       } else {
         dev.ping = null;
         dev.offlineSec = (dev.offlineSec || 0) + 5;
+        if (!dev.hours24 || dev.hours24.length !== 24) dev.hours24 = Array(24).fill(0);
+        dev.hours24[currentHour] = 0;
+        if (dev.offlineSec && dev.offlineSec > 0) {
+          const offHours = Math.min(24, Math.floor(dev.offlineSec / 3600));
+          for (let hr = 0; hr <= offHours; hr++) {
+            const pastHour = (currentHour - hr + 24) % 24;
+            dev.hours24[pastHour] = 0;
+          }
+        }
         if (prevStatus === 'online' || prevStatus === 'warn') {
           addEventLog('off', `${dev.name}: не в сети`, 'disconnect', dev.name, dev.id);
         }
@@ -1162,6 +1185,8 @@ async function syncWithKeenetic() {
     } else {
       // Новое устройство, зарегистрированное в Keenetic
       const vendorName = getVendor(mac);
+      const initialHours = Array(24).fill(0);
+      if (isActive) initialHours[currentHour] = 1;
       const newDev = {
         id: `dev_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
         name: routerName || `${vendorName.split(' ')[0]} (${ip || 'Wi-Fi'})`,
@@ -1176,12 +1201,12 @@ async function syncWithKeenetic() {
         status: isActive ? 'online' : 'offline',
         ping: isActive ? 1.0 : null,
         basePing: 1.0,
-        sessionSec: h.uptime || 60,
+        sessionSec: isActive ? (h.uptime || 60) : 0,
         offlineSec: isActive ? 0 : 60,
         downMbps: 0.1,
         upMbps: 0.05,
         pingHistory: isActive ? [1.0] : [],
-        hours24: Array(24).fill(isActive ? 1 : 0),
+        hours24: initialHours,
         lastSeen: isActive ? 'Только что' : 'Ранее',
         ports: h.port ? `Порт ${h.port}` : '—',
         unconfirmed: true
@@ -1417,9 +1442,28 @@ setInterval(async () => {
       if (!dev.pingHistory) dev.pingHistory = [];
       dev.pingHistory.push(0);
       if (dev.pingHistory.length > 12) dev.pingHistory.shift();
+      if (dev.status === 'offline') {
+        if (!dev.hours24 || dev.hours24.length !== 24) dev.hours24 = Array(24).fill(0);
+        dev.hours24[currentHour] = 0;
+      }
     }
   }));
 }, 2000);
+
+// Ежечасный сброс слота карты присутствия при переходе часа
+let lastRolloverHour = new Date().getHours();
+setInterval(() => {
+  const currentHour = new Date().getHours();
+  if (currentHour !== lastRolloverHour) {
+    devices.forEach(dev => {
+      if (!dev.hours24 || dev.hours24.length !== 24) dev.hours24 = Array(24).fill(0);
+      const isOnline = dev.status === 'online' || dev.status === 'warn';
+      dev.hours24[currentHour] = isOnline ? 1 : 0;
+    });
+    lastRolloverHour = currentHour;
+    saveDevices();
+  }
+}, 30000);
 
 // Сбор детальной системной телеметрии с VDS серверов по SSH
 function collectVdsTelemetry(srv) {
