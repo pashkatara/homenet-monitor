@@ -1,5 +1,6 @@
 const http = require('http');
 const https = require('https');
+const url = require('url');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -254,13 +255,27 @@ function saveVds() {
 }
 
 // 1.2 Хранилище реального журнала событий
+const MAX_EVENTS = 2000;
 let eventsLog = [];
 try {
   if (fs.existsSync(EVENTS_FILE)) {
     eventsLog = JSON.parse(fs.readFileSync(EVENTS_FILE, 'utf8'));
+    if (!Array.isArray(eventsLog)) eventsLog = [];
+    if (eventsLog.length > MAX_EVENTS) eventsLog = eventsLog.slice(0, MAX_EVENTS);
   }
 } catch (e) {
   eventsLog = [];
+}
+
+let saveEventsTimer = null;
+function saveEventsLogDebounced() {
+  if (saveEventsTimer) return;
+  saveEventsTimer = setTimeout(() => {
+    saveEventsTimer = null;
+    try {
+      fs.writeFile(EVENTS_FILE, JSON.stringify(eventsLog, null, 2), 'utf8', () => {});
+    } catch (e) {}
+  }, 1000);
 }
 
 // История температуры процессора сервера для расчета пиков за день и неделю
@@ -553,10 +568,8 @@ function addEventLog(type, text, category = 'connect', deviceName = 'Сеть', 
   }
 
   eventsLog.unshift(entry);
-  if (eventsLog.length > 1000) eventsLog.pop();
-  try {
-    fs.writeFileSync(EVENTS_FILE, JSON.stringify(eventsLog, null, 2), 'utf8');
-  } catch (e) {}
+  if (eventsLog.length > MAX_EVENTS) eventsLog.pop();
+  saveEventsLogDebounced();
   return entry;
 }
 
@@ -2521,8 +2534,11 @@ const server = http.createServer(async (req, res) => {
 
   // 12. Реальный журнал событий домашней сети
   if (pathname === '/api/logs' && req.method === 'GET') {
+    const parsedUrl = url.parse(req.url, true);
+    const limit = parseInt(parsedUrl.query.limit, 10);
+    const logsToSend = (limit && limit > 0) ? eventsLog.slice(0, limit) : eventsLog;
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({ ok: true, logs: eventsLog }));
+    res.end(JSON.stringify({ ok: true, total: eventsLog.length, logs: logsToSend }));
     return;
   }
 

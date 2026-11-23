@@ -3761,7 +3761,7 @@
     }
 
     function updateLogsSubtitleCount() {
-      const count = (state.logs && Array.isArray(state.logs)) ? state.logs.length : 0;
+      const count = state.logsTotalCount || ((state.logs && Array.isArray(state.logs)) ? state.logs.length : 0);
       const overviewSub = document.getElementById('overviewLogsSubtitle');
       if (overviewSub) overviewSub.textContent = `Событий в журнале: ${count}`;
       const fullSub = document.getElementById('logsSectionSubtitle');
@@ -4664,12 +4664,14 @@
           }
         }
 
-        // Синхронизация реального журнала событий
+        // Синхронизация реального журнала событий (в фоновом режиме забираем последние 50, на вкладке журнала — полный список)
         try {
-          const logsRes = await fetch('api/logs');
+          const logsUrl = state.pageTab === 'logs' ? 'api/logs' : 'api/logs?limit=50';
+          const logsRes = await fetch(logsUrl);
           if (logsRes.ok) {
             const lData = await logsRes.json();
-            if (Array.isArray(lData.logs) && lData.logs.length > 0) {
+            if (Array.isArray(lData.logs)) {
+              if (lData.total !== undefined) state.logsTotalCount = lData.total;
               state.logs = lData.logs;
               renderLogs();
               if (state.pageTab === 'logs') renderFullLogsTable();
@@ -5348,6 +5350,13 @@
         document.getElementById('logsSection').classList.toggle('hidden', tab !== 'logs');
         document.getElementById('topologySection').classList.toggle('hidden', tab !== 'topology');
         if (tab === 'logs') {
+          fetch('api/logs').then(r => r.json()).then(d => {
+            if (Array.isArray(d.logs)) {
+              if (d.total !== undefined) state.logsTotalCount = d.total;
+              state.logs = d.logs;
+              renderFullLogsTable();
+            }
+          }).catch(() => {});
           // Если фильтр не был явно установлен перед переходом, сбрасываем к стандартному виду
           if (!preserveFilter) {
             state.logsDeviceFilter = null;
