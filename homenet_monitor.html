@@ -218,7 +218,7 @@
           </div>
           <div>
             <h3 class="text-sm font-bold text-white">Перезагрузка локального сервера</h3>
-            <p class="text-xs text-slate-400">Linux Server • Localhost</p>
+            <p class="text-xs text-slate-400">Ubuntu 26.04.1 • 192.168.0.6</p>
           </div>
         </div>
 
@@ -464,7 +464,7 @@
           <div class="flex items-center gap-2">
             <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">HomeNet Monitor</h1>
           </div>
-          <p class="text-xs text-slate-400 font-medium tracking-tight">LAN 192.168.1.0/24 • Шлюз 192.168.1.1</p>
+          <p class="text-xs text-slate-400 font-medium tracking-tight">LAN 192.168.0.0/24 • Шлюз 192.168.0.1</p>
         </div>
       </div>
 
@@ -626,7 +626,7 @@
         <div class="min-w-0 flex-1 flex flex-col justify-between h-[42px]">
           <div class="flex items-baseline justify-between gap-1">
             <span class="text-[10px] text-slate-400 truncate">Router Uptime</span>
-            <span class="text-[10px] text-slate-400 truncate">192.168.1.1</span>
+            <span class="text-[10px] text-slate-400 truncate">192.168.0.1</span>
           </div>
           <div class="flex items-baseline leading-none">
             <span id="kpiUptimeDays" class="text-xs font-semibold text-slate-400 mr-1 min-w-[20px] inline-block invisible">0д</span>
@@ -912,7 +912,7 @@
             <div class="flex items-center justify-between text-xs pt-2.5 border-t border-slate-800/80">
               <div class="flex items-center gap-2">
                 <span id="routerStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                <span id="routerStatusText" class="text-slate-300 font-medium">Keenetic (192.168.1.1)</span>
+                <span id="routerStatusText" class="text-slate-300 font-medium">Keenetic (192.168.0.1)</span>
               </div>
               <span id="routerStatusDetail" class="text-[11px] px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 font-medium">Подключен (KeeneticOS)</span>
             </div>
@@ -1293,15 +1293,15 @@
           </div>
           <div>
             <div class="text-[11px] text-slate-400">Процессор</div>
-            <div id="hostBannerCpu" class="font-semibold text-white mt-0.5 truncate" title="Generic CPU">Generic CPU</div>
+            <div id="hostBannerCpu" class="font-semibold text-white mt-0.5 truncate" title="AMD PRO A8-8670E R7">AMD PRO A8-8670E R7</div>
           </div>
           <div>
             <div class="text-[11px] text-slate-400">Ядро Linux</div>
-            <div id="hostBannerKernel" class="font-semibold text-white mono mt-0.5">Linux</div>
+            <div id="hostBannerKernel" class="font-semibold text-white mono mt-0.5">7.0.0-43-generic</div>
           </div>
           <div>
             <div class="text-[11px] text-slate-400">Интерфейс</div>
-            <div id="hostBannerIface" class="font-semibold text-blue-400 mono mt-0.5">eth0 • 1000 Мбит/с</div>
+            <div id="hostBannerIface" class="font-semibold text-blue-400 mono mt-0.5">enp8s0f0 • 1000 Мбит/с</div>
           </div>
           <div>
             <div class="text-[11px] text-slate-400">Температура CPU</div>
@@ -1351,9 +1351,9 @@
             </div>
             <div class="space-y-1 text-xs min-w-0">
               <div class="text-sm font-semibold text-white">Память (RAM)</div>
-              <div class="text-slate-400 truncate">Всего: <span id="hostRamPhysical" class="mono text-slate-200 font-semibold">8.0 ГБ</span></div>
+              <div class="text-slate-400 truncate">Всего: <span id="hostRamPhysical" class="mono text-slate-200 font-semibold">8.0 ГБ (2 × 4 ГБ DDR4)</span></div>
               <div class="text-slate-400">Занято ОС: <span id="hostRamUsed" class="mono text-slate-200">0.7 / 6.2 ГБ</span></div>
-              <div class="text-slate-400 text-[10px] text-slate-500">~1.8 ГБ зарезервировано системой</div>
+              <div class="text-slate-400 text-[10px] text-slate-500">~1.8 ГБ выделено видеоядру AMD R7</div>
             </div>
           </div>
 
@@ -1372,7 +1372,7 @@
             </div>
             <div class="space-y-1 text-xs min-w-0">
               <div class="text-sm font-semibold text-white">Накопитель (SATA SSD)</div>
-              <div id="hostDiskModel" class="mono text-slate-300 font-semibold truncate">SSD (256 ГБ)</div>
+              <div id="hostDiskModel" class="mono text-slate-300 font-semibold truncate">SSD SATA P3-256 (238.5 ГБ)</div>
               <div class="text-slate-400">Корень /: <span id="hostDiskUsed" class="mono text-slate-200">7.7 / 98.0 ГБ</span></div>
               <div class="text-slate-400">Статус: <span class="mono text-emerald-400">В норме</span></div>
             </div>
@@ -1457,7 +1457,7 @@
           <div class="flex items-center gap-2.5">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
             <div>
-              <div class="text-xs font-bold text-white mono">host@server (Linux System)</div>
+              <div class="text-xs font-bold text-white mono">pavel@192.168.0.6 (Ubuntu 26.04.1 LTS)</div>
               <div class="text-[11px] text-slate-400">Интерактивный терминал Bash • Выполнение реальных команд на сервере</div>
             </div>
           </div>
@@ -1479,12 +1479,12 @@
         </div>
 
         <div id="hostTerminalOutput" class="h-96 sm:h-[460px] overflow-y-auto p-4 mono text-xs text-slate-200 space-y-1.5 bg-black/95 rounded-xl border border-slate-800/80 shadow-inner">
-          <div class="text-slate-500">Connected to local host (Linux x86_64)</div>
+          <div class="text-slate-500">Connected to local host 192.168.0.6 (Ubuntu 26.04.1 LTS, Linux 7.0.0-43-generic x86_64)</div>
           <div class="text-slate-500">Сессия Bash активна. Введите команду в поле ниже или выберите быструю команду сверху.</div>
         </div>
 
         <form id="hostTerminalForm" class="flex items-center gap-2 p-2 sm:p-2.5 bg-slate-950 border border-slate-800 rounded-xl">
-          <span class="mono text-xs text-emerald-400 font-bold shrink-0">admin@server:~$</span>
+          <span class="mono text-xs text-emerald-400 font-bold shrink-0">pavel@server:~$</span>
           <input id="hostTerminalInput" type="text" autocomplete="off" placeholder="Введите команду (например: docker ps, free -h, df -h, ls -la, uname -a)..." class="flex-1 bg-transparent text-xs text-white mono focus:outline-none placeholder-slate-600" />
           <button type="submit" class="px-4 py-1.5 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white transition flex items-center gap-1">
             <span>Выполнить</span>
@@ -1523,7 +1523,7 @@
         </svg>
         <div class="absolute inset-0 flex flex-col items-center justify-center">
           <span id="scanPercentText" class="text-2xl font-bold text-white mono">0%</span>
-          <span class="text-[10px] text-slate-400 mono">192.168.1.0/24</span>
+          <span class="text-[10px] text-slate-400 mono">192.168.0.0/24</span>
         </div>
       </div>
       <div>
@@ -1717,7 +1717,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-400 mb-1">IP-адрес</label>
-            <input id="newDevIp" type="text" required value="192.168.1.120" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input id="newDevIp" type="text" required value="192.168.0.120" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label class="block text-slate-400 mb-1">MAC-адрес</label>
@@ -1887,7 +1887,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-400 mb-1">IP-адрес роутера (шлюз)</label>
-            <input id="routerCfgIpKeenetic" type="text" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-200 mono focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="192.168.1.1" value="192.168.1.1" />
+            <input id="routerCfgIpKeenetic" type="text" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-200 mono focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="192.168.0.1" value="192.168.0.1" />
           </div>
           <div>
             <label class="block text-slate-400 mb-1">Порт веб-интерфейса</label>
@@ -1918,7 +1918,7 @@
             <span>Как настроить доступ в KeeneticOS:</span>
           </div>
           <ol class="list-decimal list-inside space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
-            <li>Откройте веб-интерфейс вашего Keenetic (обычно <span class="mono text-blue-300">http://192.168.1.1</span> или <span class="mono text-blue-300">http://192.168.1.1</span>).</li>
+            <li>Откройте веб-интерфейс вашего Keenetic (обычно <span class="mono text-blue-300">http://192.168.0.1</span> или <span class="mono text-blue-300">http://192.168.1.1</span>).</li>
             <li>Перейдите в меню: <b class="text-white">«Управление» → «Пользователи и доступ»</b>.</li>
             <li>Нажмите кнопку <b class="text-white">«Добавить пользователя»</b> (например, логин: <span class="mono text-amber-300">monitor</span>).</li>
             <li>В блоке прав доступа включите: <b class="text-emerald-400">«Доступ к командной строке и веб-интерфейсу»</b>.</li>
@@ -1981,7 +1981,7 @@
       <div id="tabRouterNone" class="hidden space-y-3.5 text-xs">
         <div>
           <label class="block text-slate-400 mb-1">IP-адрес основного шлюза (роутера)</label>
-          <input id="routerCfgIpNone" type="text" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-200 mono focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="192.168.1.1 или 192.168.1.1" value="192.168.1.1" />
+          <input id="routerCfgIpNone" type="text" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-200 mono focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="192.168.0.1 или 192.168.1.1" value="192.168.0.1" />
           <p class="text-[11px] text-slate-500 mt-1">Используется для проверки пинга до шлюза и построения схемы топологии сети.</p>
         </div>
 
@@ -2174,7 +2174,7 @@
           <div>
             <label class="block text-slate-400 mb-1">Токен авторизации</label>
             <div class="flex items-center gap-1.5">
-              <input id="settingMcpToken" type="text" readonly value="hn_mcp_your_token_here" class="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 mono text-[11px]" />
+              <input id="settingMcpToken" type="text" readonly value="hn_mcp_8f4a9c2e71b04d" class="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 mono text-[11px]" />
               <button type="button" id="regenMcpTokenBtn" title="Сгенерировать новый токен" class="px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] shrink-0">↻</button>
             </div>
           </div>
@@ -2242,13 +2242,13 @@
         soundAlert: false,
         mcpEnabled: false,
         mcpMode: 'readonly',
-        mcpToken: 'hn_mcp_your_token_here',
+        mcpToken: 'hn_mcp_8f4a9c2e71b04d',
         timezone: 'Asia/Omsk',
         routerType: 'keenetic',
-        routerIp: '192.168.1.1',
+        routerIp: '192.168.0.1',
         routerPort: 80,
         routerProto: 'http',
-        routerUser: 'admin',
+        routerUser: 'monitor',
         routerPass: '',
         routerWanInterface: 'PPPoE0',
         routerName: 'Keenetic Hero 4G+',
@@ -2418,7 +2418,7 @@
         const devPart = fullText.slice(0, colonIdx).trim();
         let commentPart = fullText.slice(colonIdx + 1).trim();
 
-        // Очистка от лишних скобок шлюза/IP в статусе: (Keenetic: ...), (192.168.1.x) и т.д.
+        // Очистка от лишних скобок шлюза/IP в статусе: (Keenetic: ...), (192.168.0.x) и т.д.
         commentPart = commentPart
           .replace(/\s*\((Keenetic|LAN|Wi-Fi)[^)]*\)/gi, '')
           .replace(/\s*\(\d+\.\d+\.\d+\.\d+\)/gi, '')
@@ -3348,7 +3348,7 @@
         const timeEl = document.getElementById('kpiUptime');
         let sec = state.routerUptimeSec || 0;
         if (!sec) {
-          const router = state.devices.find((d) => d.type === 'router');
+          const router = state.devices.find((d) => d.type === 'router' || d.mac === '80:af:ca:f8:04:e4');
           if (router && router.sessionSec) sec = router.sessionSec;
         }
         if (!sec) {
@@ -3625,10 +3625,6 @@
       }
       const raw24 = Array.isArray(d.hours24) && d.hours24.length === 24 ? d.hours24 : Array(24).fill(0);
       const isOnline = d.status !== 'offline';
-      const sessionSec = d.sessionSec || 0;
-      const sessionHours = Math.floor(sessionSec / 3600);
-      const offlineSec = d.offlineSec || 0;
-      const offlineHours = Math.floor(offlineSec / 3600);
 
       const rel = [];
       for (let i = 0; i < 24; i++) {
@@ -3637,15 +3633,10 @@
         let val = raw24[clockHour] || 0;
 
         if (hoursAgo === 0) {
-          // Текущий час
+          // Текущий час отображает реальный статус прямо сейчас
           val = isOnline ? (d.status === 'warn' ? 2 : 1) : 0;
-        } else if (isOnline && hoursAgo <= sessionHours) {
-          // Если устройство онлайн уже N часов, то все эти N часов оно гарантированно было в сети
-          if (val === 0) val = 1;
-        } else if (!isOnline && hoursAgo <= offlineHours) {
-          // Если устройство офлайн уже N часов, то все эти N часов оно гарантированно не было в сети
-          val = 0;
         }
+        // Честная фиксация без синтетических дорисовок задним числом
         rel.push({ val, clockHour, hoursAgo });
       }
       return rel;
@@ -4513,9 +4504,9 @@
     function updateHostUI(host) {
       if (!host) return;
       if (document.getElementById('hostBannerHostname')) document.getElementById('hostBannerHostname').textContent = host.hostname || 'server';
-      if (document.getElementById('hostBannerCpu')) document.getElementById('hostBannerCpu').textContent = host.cpuModel || 'Generic CPU';
+      if (document.getElementById('hostBannerCpu')) document.getElementById('hostBannerCpu').textContent = host.cpuModel || 'AMD PRO A8-8670E';
       if (document.getElementById('hostBannerKernel')) document.getElementById('hostBannerKernel').textContent = host.kernel || 'Linux';
-      if (document.getElementById('hostBannerIface')) document.getElementById('hostBannerIface').textContent = host.iface || 'eth0';
+      if (document.getElementById('hostBannerIface')) document.getElementById('hostBannerIface').textContent = host.iface || 'enp8s0f0';
       if (document.getElementById('hostCpuTemp')) document.getElementById('hostCpuTemp').textContent = `${host.cpuTemp} °C`;
       if (host.uptimeSec) state.hostUptimeSec = host.uptimeSec;
       updateHostUptimeDisplay();
@@ -4842,7 +4833,7 @@
 
       function emitDiscoveredDeviceLog() {
         const randOct = 170 + Math.floor(Math.random() * 60);
-        const ip = `192.168.1.${randOct}`;
+        const ip = `192.168.0.${randOct}`;
         const mac = `74:DA:38:${String(10 + Math.floor(Math.random() * 80))}:${String(10 + Math.floor(Math.random() * 80))}:${String(10 + Math.floor(Math.random() * 80))}`;
         const now = new Date().toTimeString().slice(0, 8);
         const entry = {
@@ -5776,12 +5767,12 @@
         if (mcpTok && state.settings.mcpToken) mcpTok.value = state.settings.mcpToken;
 
         if (pre) {
-          const hostIp = window.location.hostname || '127.0.0.1';
+          const hostIp = window.location.hostname || '192.168.0.6';
           const cfg = {
             mcpServers: {
               homenet: {
                 url: `http://${hostIp}:3001/mcp`,
-                headers: { Authorization: `Bearer ${state.settings.mcpToken || 'hn_mcp_your_token_here'}` },
+                headers: { Authorization: `Bearer ${state.settings.mcpToken || 'hn_mcp_8f4a9c2e71b04d'}` },
                 mode: state.settings.mcpMode || 'readonly',
               },
             },
@@ -6034,7 +6025,7 @@
 
       function updateRouterStatusCard() {
         const rType = state.settings.routerType || 'keenetic';
-        const rIp = state.settings.routerIp || '192.168.1.1';
+        const rIp = state.settings.routerIp || '192.168.0.1';
         const dot = document.getElementById('routerStatusDot');
         const txt = document.getElementById('routerStatusText');
         const badge = document.getElementById('routerStatusDetail');
@@ -6091,7 +6082,7 @@
 
         // Keenetic
         const ipK = document.getElementById('routerCfgIpKeenetic');
-        if (ipK) ipK.value = state.settings.routerIp || '192.168.1.1';
+        if (ipK) ipK.value = state.settings.routerIp || '192.168.0.1';
         const portK = document.getElementById('routerCfgPortKeenetic');
         if (portK) portK.value = state.settings.routerPort || 80;
         const userK = document.getElementById('routerCfgUserKeenetic');
@@ -6115,7 +6106,7 @@
 
         // None
         const ipN = document.getElementById('routerCfgIpNone');
-        if (ipN) ipN.value = state.settings.routerIp || '192.168.1.1';
+        if (ipN) ipN.value = state.settings.routerIp || '192.168.0.1';
 
         const fb = document.getElementById('routerTestFeedback');
         if (fb) fb.classList.add('hidden');
@@ -6126,7 +6117,7 @@
         if (type === 'keenetic') {
           return {
             type: 'keenetic',
-            ip: (document.getElementById('routerCfgIpKeenetic')?.value || '192.168.1.1').trim(),
+            ip: (document.getElementById('routerCfgIpKeenetic')?.value || '192.168.0.1').trim(),
             port: parseInt(document.getElementById('routerCfgPortKeenetic')?.value, 10) || 80,
             proto: 'http',
             user: (document.getElementById('routerCfgUserKeenetic')?.value || 'monitor').trim(),
@@ -6148,7 +6139,7 @@
         } else {
           return {
             type: 'none',
-            ip: (document.getElementById('routerCfgIpNone')?.value || '192.168.1.1').trim(),
+            ip: (document.getElementById('routerCfgIpNone')?.value || '192.168.0.1').trim(),
             port: 80,
             proto: 'http',
             user: '',
@@ -6809,7 +6800,7 @@
         hostCmdHistory.push(clean);
         hostCmdHistoryIndex = hostCmdHistory.length;
 
-        appendHostTerminalLine(`admin@server:~$ ${clean}`, 'text-emerald-400 font-bold');
+        appendHostTerminalLine(`pavel@server:~$ ${clean}`, 'text-emerald-400 font-bold');
 
         if (clean === 'clear') {
           hostTerminalOutput.innerHTML = '';
@@ -7187,16 +7178,16 @@
         const container = document.getElementById('topologyTreeContainer');
         if (!container) return;
 
-        const gwRouter = state.devices.find((d) => d.id === 'dev_router_gw' || d.ip === '192.168.1.1') || {
+        const gwRouter = state.devices.find((d) => d.id === 'dev_router_gw' || d.ip === '192.168.0.1') || {
           id: 'dev_router_gw',
           name: 'Keenetic (Шлюз)',
-          ip: '192.168.1.1',
+          ip: '192.168.0.1',
           status: 'online'
         };
-        const meshRouter = state.devices.find((d) => d.id === 'dev_router_mesh' || d.role === 'mesh' || d.role === 'repeater');
+        const meshRouter = state.devices.find((d) => d.id === 'dev_router_mesh' || d.ip === '192.168.0.73');
 
         // Отделяем устройства не в сети от активной топологии
-        const onlineDevs = state.devices.filter((d) => d.status !== 'offline' && d.id !== 'dev_router_gw' && d.id !== 'dev_router_mesh' && d.type !== 'router');
+        const onlineDevs = state.devices.filter((d) => d.status !== 'offline' && d.id !== 'dev_router_gw' && d.id !== 'dev_router_mesh' && d.mac !== '80:af:ca:f8:21:f8' && d.mac !== '80:af:ca:f8:04:e4');
         const offlineDevs = state.devices.filter((d) => d.status === 'offline' && d.type !== 'router');
 
         // Активные устройства строго по физическим типам подключения
@@ -7441,7 +7432,7 @@
         const payload = JSON.stringify(
           {
             exportedAt: new Date().toISOString(),
-            subnet: '192.168.1.0/24',
+            subnet: '192.168.0.0/24',
             devices: state.devices.map(({ id, name, ip, mac, status, ping, connLabel, connectedAt, sessionSec }) => ({
               id, name, ip, mac, status, ping, connLabel, connectedAt, sessionSec,
             })),

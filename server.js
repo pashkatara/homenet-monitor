@@ -8,17 +8,17 @@ const net = require('net');
 const crypto = require('crypto');
 const { exec, execSync } = require('child_process');
 
-const PORT = parseInt(process.env.PORT, 10) || 3001;
-const SUBNET_PREFIX = process.env.SUBNET_PREFIX || '192.168.1.';
-const GATEWAY_IP = process.env.GATEWAY_IP || '192.168.1.1';
-const WAN_TARGET = process.env.WAN_TARGET || '1.1.1.1';
-
-const DATA_DIR = process.env.DATA_DIR || (fs.existsSync(path.join(__dirname, 'data')) ? path.join(__dirname, 'data') : __dirname);
-const DATA_FILE = path.join(DATA_DIR, 'devices.json');
-const VDS_FILE = path.join(DATA_DIR, 'vds.json');
-const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
-const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
-const HOST_HISTORY_FILE = path.join(DATA_DIR, 'host_history.json');
+const PORT = 3001;
+const SUBNET_PREFIX = '192.168.0.';
+const GATEWAY_IP = '192.168.0.1';
+const WAN_TARGET = '1.1.1.1';
+const KEENETIC_USER = 'monitor';
+const KEENETIC_PASS = 'tarchanin';
+const DATA_FILE = path.join(__dirname, 'devices.json');
+const VDS_FILE = path.join(__dirname, 'vds.json');
+const EVENTS_FILE = path.join(__dirname, 'events.json');
+const SETTINGS_FILE = path.join(__dirname, 'settings.json');
+const HOST_HISTORY_FILE = path.join(__dirname, 'host_history.json');
 
 // Хранилище детальной истории нагрузки хоста (time-series с реальными точками)
 let hostHistory = [];
@@ -59,33 +59,17 @@ let appSettings = {
   autoScan: true,
   autoScanIntervalMs: 300000,
   wanCheck: true,
-  wanTarget: WAN_TARGET,
+  wanTarget: '1.1.1.1',
   mcpEnabled: false,
-  timezone: process.env.TZ || 'Europe/Moscow',
-  routerType: process.env.ROUTER_TYPE || 'keenetic', // 'keenetic' | 'openwrt' | 'none'
-  routerIp: process.env.ROUTER_IP || GATEWAY_IP,
-  routerPort: parseInt(process.env.ROUTER_PORT, 10) || 80,
-  routerProto: process.env.ROUTER_PROTO || 'http',
-  routerUser: process.env.ROUTER_USER || 'admin',
-  routerPass: process.env.ROUTER_PASS || '',
-  routerWanInterface: process.env.ROUTER_WAN_IFACE || 'PPPoE0',
-  routerName: process.env.ROUTER_NAME || 'Wi-Fi Router',
-  autoScanBarColor: '#f59e0b',
-  soundAlert: false,
-  mcpMode: 'readonly',
-  mcpToken: 'hn_mcp_' + crypto.randomBytes(7).toString('hex'),
-  logConnect: true,
-  logDisconnect: true,
-  logPing: true,
-  logScan: true,
-  presencePalette: 'classic',
-  presenceShape: 'default',
-  keyDeviceIds: [],
-  ignoredIds: [],
-  tgToken: process.env.TG_TOKEN || '',
-  tgChatId: process.env.TG_CHAT_ID || '',
-  tgNewDevice: true,
-  tgMuted: false
+  timezone: 'Asia/Omsk', // Часовой пояс по умолчанию для Telegram и журнала
+  routerType: 'keenetic', // 'keenetic' | 'openwrt' | 'none'
+  routerIp: '192.168.0.1',
+  routerPort: 80,
+  routerProto: 'http',
+  routerUser: 'monitor',
+  routerPass: 'tarchanin',
+  routerWanInterface: 'PPPoE0',
+  routerName: 'Keenetic Hero 4G+'
 };
 try {
   if (fs.existsSync(SETTINGS_FILE)) {
@@ -166,17 +150,10 @@ try {
       return true;
     });
 
-    // Санитизация истории присутствия (hours24) с учетом реального времени оффлайна
-    const curH = getCurrentLocalHour();
+    // Проверка корректности массива hours24 (ровно 24 слота)
     devices.forEach(d => {
       if (!d.hours24 || !Array.isArray(d.hours24) || d.hours24.length !== 24) {
         d.hours24 = Array(24).fill(0);
-      }
-      if (d.status === 'offline') {
-        const offHours = Math.min(24, Math.floor((d.offlineSec || 0) / 3600));
-        for (let hr = 0; hr <= offHours; hr++) {
-          d.hours24[(curH - hr + 24) % 24] = 0;
-        }
       }
       sanitizeDays30(d);
     });
@@ -578,7 +555,7 @@ const KNOWN_VENDORS = {
   '80:AF:CA': 'Keenetic Ltd.',
   '86:AF:CA': 'Keenetic Ltd.',
   'CC:2D:21': 'Tenda Technology',
-  '00:16:96': 'ASUSTeK',
+  '00:16:96': 'ASUSTeK / Mini PC',
   '16:EB:B6': 'Samsung Electronics',
   '10:B4:1D': 'Bambu Lab',
   '56:C4:E8': 'Samsung Electronics',
@@ -587,15 +564,15 @@ const KNOWN_VENDORS = {
   '08:A6:F7': 'Espressif Inc.',
   '80:B5:4E': 'Espressif Inc.',
   'E8:6B:EA': 'Espressif Inc.',
-  'E4:F1:4C': 'Network Video Recorder',
+  'E4:F1:4C': 'G.Craftsman NVR',
   'BA:E6:D9': 'Samsung Electronics',
   'F4:CF:A2': 'Espressif Inc.',
-  '84:47:09': 'Home Automation',
-  '00:33:7A': 'Home Automation',
+  '84:47:09': 'Home Assistant',
+  '00:33:7A': 'HomeGate Automation',
   'B0:EB:57': 'Huawei / Honor',
   'A6:20:52': 'Apple Inc.',
   'BE:9B:23': 'Apple Inc.',
-  'DC:21:48': 'Laptop',
+  'DC:21:48': 'Laptop Intel/AMD',
   'EC:9C:32': 'Xiaomi Communications',
   '60:35:73': 'Xiaomi Communications',
   '60:A4:B7': 'OpenWrt Router',
@@ -696,7 +673,7 @@ async function pingVds(srv) {
   return icmp;
 }
 
-// Чтение ARP таблицы ядра Linux (только подсеть 192.168.1.x)
+// Чтение ARP таблицы ядра Linux (только подсеть 192.168.0.x)
 function getArpTable() {
   const table = {}; // ip -> mac
   try {
@@ -1179,7 +1156,7 @@ async function syncWithKeenetic() {
     const routerName = h.name || h.hostname || '';
 
     // Роутер KN-4110 и шлюз мы обрабатываем отдельно ниже как устройства инфраструктуры
-    const isRouterHost = (ip === (appSettings.routerIp || GATEWAY_IP) || routerName === 'Keenetic' || (gwDev && mac === gwDev.mac));
+    const isRouterHost = (mac === '80:af:ca:f8:04:e4' || mac === '80:af:ca:f8:21:f8' || routerName === 'Keenetic' || ip === '192.168.0.1');
     if (isRouterHost) continue;
 
     keeneticMacs.add(mac);
@@ -1215,8 +1192,10 @@ async function syncWithKeenetic() {
       }
 
       dev.vendor = dev.vendor || getVendor(mac);
-      dev.connType = detectedConnType;
-      dev.connLabel = detectedConnLabel;
+      if (isActive || !dev.connType) {
+        dev.connType = detectedConnType;
+        dev.connLabel = detectedConnLabel;
+      }
 
       if (isActive && dev.status !== 'offline') {
         dev.lastSeen = 'Только что';
@@ -1225,35 +1204,11 @@ async function syncWithKeenetic() {
         if (h.uptime) dev.sessionSec = h.uptime;
         if (!dev.ping || dev.ping === 0) dev.ping = 1.0;
         
-        // Корректное заполнение 24 часов на основе фактического аптайма сессии
+        // Фиксация присутствия в текущем часовом слоте без вмешательства в историю
         if (!dev.hours24 || dev.hours24.length !== 24) dev.hours24 = Array(24).fill(0);
-        dev.hours24[currentHour] = 1;
-        if (dev.sessionSec && dev.sessionSec > 0) {
-          const activeHours = Math.min(24, Math.floor(dev.sessionSec / 3600));
-          for (let hr = 0; hr <= activeHours; hr++) {
-            const pastHour = (currentHour - hr + 24) % 24;
-            dev.hours24[pastHour] = 1;
-          }
-        }
-
-        // Если роутер зафиксировал появление устройства менее 24 часов назад,
-        // все часы ДО первого обнаружения (first-seen) гарантированно были оффлайн (0)
-        const rawFirstSeen = h['first-seen'] !== undefined ? h['first-seen'] : h.firstSeen;
-        const firstSeenSec = rawFirstSeen !== undefined ? rawFirstSeen : (dev.sessionSec || 0);
-        if (firstSeenSec < 86400) {
-          const firstSeenHours = Math.ceil(firstSeenSec / 3600);
-          for (let hr = firstSeenHours + 1; hr < 24; hr++) {
-            const pastHour = (currentHour - hr + 24) % 24;
-            dev.hours24[pastHour] = 0;
-          }
-        }
+        dev.hours24[currentHour] = dev.status === 'warn' ? 2 : 1;
 
         if (prevStatus === 'offline') {
-          const offHours = Math.min(24, Math.floor((dev.offlineSec || 0) / 3600));
-          for (let hr = 1; hr <= offHours; hr++) {
-            const pastHour = (currentHour - hr + 24) % 24;
-            dev.hours24[pastHour] = 0;
-          }
           addEventLog('ok', `${dev.name}: появился в сети`, 'connect', dev.name, dev.id);
         }
       } else {
@@ -1261,13 +1216,6 @@ async function syncWithKeenetic() {
         dev.offlineSec = (dev.offlineSec || 0) + 5;
         if (!dev.hours24 || dev.hours24.length !== 24) dev.hours24 = Array(24).fill(0);
         dev.hours24[currentHour] = 0;
-        if (dev.offlineSec && dev.offlineSec > 0) {
-          const offHours = Math.min(24, Math.floor(dev.offlineSec / 3600));
-          for (let hr = 0; hr <= offHours; hr++) {
-            const pastHour = (currentHour - hr + 24) % 24;
-            dev.hours24[pastHour] = 0;
-          }
-        }
         if (prevStatus === 'online' || prevStatus === 'warn') {
           addEventLog('off', `${dev.name}: не в сети`, 'disconnect', dev.name, dev.id);
         }
@@ -1316,26 +1264,25 @@ async function syncWithKeenetic() {
     if (d.type === 'router' || d.id === 'dev_router_gw' || d.id === 'dev_router_mesh') return true;
     if (!d.mac) return false;
     const m = d.mac.toLowerCase();
-    if (gwDev && gwDev.mac && m === gwDev.mac.toLowerCase()) return false;
+    if (m === '80:af:ca:f8:04:e4' || m === '80:af:ca:f8:21:f8') return false;
     if (seenMacs.has(m)) return false;
     if (!keeneticMacs.has(m)) return false;
     seenMacs.add(m);
     return true;
   });
 
-  // Гарантируем наличие карточки основного роутера (шлюза)
-  const gwIp = appSettings.routerIp || GATEWAY_IP;
-  let gwDev = devices.find(d => d.id === 'dev_router_gw' || d.ip === gwIp || d.type === 'router');
+  // Гарантируем наличие двух карточек роутеров Keenetic (шлюз 0.1 и узел 0.73)
+  let gwDev = devices.find(d => d.id === 'dev_router_gw' || d.mac === '80:af:ca:f8:21:f8');
   if (!gwDev) {
     gwDev = {
       id: 'dev_router_gw',
-      name: appSettings.routerName || 'Роутер (Шлюз)',
+      name: 'Keenetic (Шлюз)',
       role: 'Основной роутер',
       room: 'Серверная',
       type: 'router',
-      ip: gwIp,
-      mac: '00:11:22:33:44:55',
-      vendor: 'Gateway Router',
+      ip: '192.168.0.1',
+      mac: '80:af:ca:f8:21:f8',
+      vendor: 'Keenetic Ltd.',
       connType: 'lan',
       connLabel: 'Шлюз (WAN/LAN)',
       status: state.wanOnline ? 'online' : 'warn',
@@ -1353,12 +1300,48 @@ async function syncWithKeenetic() {
     devices.unshift(gwDev);
   } else {
     gwDev.status = 'online';
-    gwDev.ip = gwIp;
+    gwDev.ip = '192.168.0.1';
     gwDev.ping = state.gatewayPing || 0.6;
     if (keeneticSystemStats.uptimeSec || state.routerUptimeSec) {
       gwDev.sessionSec = (keeneticSystemStats.uptimeSec || state.routerUptimeSec);
     }
     if (!gwDev.hours24) gwDev.hours24 = Array(24).fill(1);
+  }
+
+  let meshDev = devices.find(d => d.id === 'dev_router_mesh' || d.mac === '80:af:ca:f8:04:e4');
+  if (!meshDev) {
+    meshDev = {
+      id: 'dev_router_mesh',
+      name: 'Keenetic KN-4110',
+      role: 'Wi-Fi Mesh узел',
+      room: 'Коридор',
+      type: 'router',
+      ip: '192.168.0.73',
+      mac: '80:af:ca:f8:04:e4',
+      vendor: 'Keenetic Ltd.',
+      connType: 'lan',
+      connLabel: 'Ethernet Backhaul',
+      status: 'online',
+      ping: 1.0,
+      basePing: 1.0,
+      sessionSec: (keeneticSystemStats.uptimeSec || state.routerUptimeSec || 60),
+      offlineSec: 0,
+      downMbps: 1.2,
+      upMbps: 0.4,
+      pingHistory: [1.0, 1.1, 1.0, 1.0, 0.9],
+      hours24: Array(24).fill(1),
+      lastSeen: 'Только что',
+      ports: 'Mesh Backhaul'
+    };
+    devices.push(meshDev);
+  } else {
+    meshDev.status = 'online';
+    meshDev.ip = '192.168.0.73';
+    meshDev.ping = 1.0;
+    if (keeneticSystemStats.uptimeSec || state.routerUptimeSec) {
+      meshDev.sessionSec = (keeneticSystemStats.uptimeSec || state.routerUptimeSec);
+    }
+    if (!meshDev.hours24) meshDev.hours24 = Array(24).fill(1);
   }
 
   saveDevices();
@@ -1518,8 +1501,9 @@ setInterval(async () => {
     if (res.online && res.ping !== null) {
       dev.ping = +(res.ping).toFixed(1);
       const isWarn = dev.ping > (dev.customPingMax || appSettings.pingThreshold || 35);
-      if (dev.status !== 'offline') dev.status = isWarn ? 'warn' : 'online';
+      dev.status = isWarn ? 'warn' : 'online';
       dev.sessionSec = (dev.sessionSec || 0) + 2;
+      dev.offlineSec = 0;
       dev.lastSeen = 'Только что';
 
       if (!dev.pingHistory) dev.pingHistory = [];
@@ -1542,7 +1526,7 @@ setInterval(async () => {
   }));
 }, 2000);
 
-// Ежечасный сброс слота карты присутствия при переходе часа
+// Ежечасный переход слота карты присутствия (круговой буфер 24 часов)
 let lastRolloverHour = getCurrentLocalHour();
 setInterval(() => {
   const currentHour = getCurrentLocalHour();
@@ -1553,13 +1537,17 @@ setInterval(() => {
       const isOnline = dev.status === 'online' || dev.status === 'warn';
 
       if (isMidnight) {
+        // Смена календарных суток: сдвигаем 30-дневную историю
         if (!dev.days30 || dev.days30.length !== 30) dev.days30 = Array(30).fill(0);
         dev.days30.shift();
-        dev.days30.push(isOnline ? 1 : 0);
-        dev.hours24 = Array(24).fill(0);
+        dev.days30.push(isOnline ? (dev.status === 'warn' ? 2 : 1) : 0);
+        // ВНИМАНИЕ: hours24 НЕ обнуляется в полночь!
+        // hours24 — это непрерывный скользящий буфер за последние 24 часа.
       }
 
-      dev.hours24[currentHour] = isOnline ? 1 : 0;
+      // Новый наступивший час инициализируется текущим состоянием устройства
+      dev.hours24[currentHour] = isOnline ? (dev.status === 'warn' ? 2 : 1) : 0;
+
       if (!dev.days30 || dev.days30.length !== 30) dev.days30 = Array(30).fill(0);
       if (isOnline) {
         dev.days30[29] = dev.status === 'warn' ? 2 : 1;
@@ -1568,7 +1556,7 @@ setInterval(() => {
     lastRolloverHour = currentHour;
     saveDevices();
   }
-}, 30000);
+}, 10000);
 
 // Сбор детальной системной телеметрии с VDS серверов по SSH
 function collectVdsTelemetry(srv) {
@@ -1709,7 +1697,7 @@ setInterval(() => {
   }
 }, 30000);
 
-// Сетевой сканер диапазона 192.168.1.1 - 254 (запуск по требованию)
+// Сетевой сканер диапазона 192.168.0.1 - 254 (запуск по требованию)
 async function runSubnetScan(isManual = false) {
   if (state.isScanning) return;
   state.isScanning = true;
@@ -1770,7 +1758,7 @@ try {
   cachedKernel = execSync('uname -r', { timeout: 1000 }).toString().trim();
 } catch (e) {}
 
-let cachedCpuModel = 'Generic CPU';
+let cachedCpuModel = 'AMD PRO A8-8670E R7 (4C/4T)';
 try {
   const cpuInfo = fs.readFileSync('/proc/cpuinfo', 'utf8');
   const m = cpuInfo.match(/model name\s*:\s*(.+)/);
@@ -1784,7 +1772,7 @@ function getHostStats() {
     hostname: os.hostname(),
     cpuModel: cachedCpuModel,
     kernel: cachedKernel,
-    iface: 'eth0 • 1000 Мбит/с',
+    iface: 'enp8s0f0 • 1000 Мбит/с',
     cpuTemp: 24,
     uptimeSec: os.uptime(),
     uptimeStr: '',
@@ -1792,7 +1780,7 @@ function getHostStats() {
     loadAvg: os.loadavg().map(v => v.toFixed(2)).join(', '),
     ramUsed: 0.7,
     ramTotal: 6.2,
-    ramPhysical: '8.0 ГБ',
+    ramPhysical: '8.0 ГБ (2 × 4 ГБ DDR4)',
     ramPct: 11,
     diskModel: 'SSD SATA P3-256 (256 ГБ)',
     diskUsed: 7.7,
@@ -1916,12 +1904,12 @@ function refreshHostServicesAsync() {
   if (isServicesPolling) return;
   isServicesPolling = true;
 
-  const hostUser = process.env.HOST_SSH_USER || '';
-  const hostPass = process.env.HOST_SSH_PASS || '';
-  const hostIp = process.env.HOST_SSH_IP || '127.0.0.1';
-  const hostPort = process.env.HOST_SSH_PORT || '22';
+  const cmd = "sshpass -p tarchanin ssh -o StrictHostKeyChecking=no -o ConnectTimeout=2 pavel@192.168.0.6 \"docker stats --no-stream --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}'\"";
+  exec(cmd, { timeout: 3000 }, (err, stdout) => {
+    isServicesPolling = false;
+    lastServicesPoll = Date.now();
+    if (err || !stdout) return;
 
-  const parseDockerStats = (stdout) => {
     try {
       const lines = stdout.trim().split('\n');
       const srvList = [];
@@ -1940,33 +1928,11 @@ function refreshHostServicesAsync() {
           });
         }
       });
-      srvList.push({ name: 'docker.service', cpu: 'CPU 0.1%', mem: '85 МБ', type: 'systemd', ok: true });
-      srvList.push({ name: 'ssh.service', cpu: 'CPU 0.0%', mem: '14 МБ', type: 'systemd', ok: true });
+      srvList.push({ name: 'docker.service', cpu: 'CPU 0.1%', mem: '106 МБ', type: 'systemd', ok: true });
+      srvList.push({ name: 'ssh.service (порт 22)', cpu: 'CPU 0.0%', mem: '14 МБ', type: 'systemd', ok: true });
       cachedHostServices = srvList;
     } catch (e) {}
-  };
-
-  if (hostUser && hostPass) {
-    const cmd = `sshpass -p '${hostPass}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=2 -p ${hostPort} ${hostUser}@${hostIp} "docker stats --no-stream --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}'"`;
-    exec(cmd, { timeout: 3000 }, (err, stdout) => {
-      isServicesPolling = false;
-      lastServicesPoll = Date.now();
-      if (!err && stdout) parseDockerStats(stdout);
-    });
-  } else {
-    exec("docker stats --no-stream --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}'", { timeout: 3000 }, (err, stdout) => {
-      isServicesPolling = false;
-      lastServicesPoll = Date.now();
-      if (!err && stdout) {
-        parseDockerStats(stdout);
-      } else if (!cachedHostServices) {
-        cachedHostServices = [
-          { name: 'docker.service', cpu: 'CPU 0.1%', mem: '85 МБ', type: 'systemd', ok: true },
-          { name: 'ssh.service', cpu: 'CPU 0.0%', mem: '14 МБ', type: 'systemd', ok: true }
-        ];
-      }
-    });
-  }
+  });
 }
 
 // Запускаем фоновый опрос раз в 5 секунд, не подвешивая поток запросов
@@ -1980,15 +1946,8 @@ function executeServerCommand(target, command) {
 
     let cmd = '';
     if (target === 'host_local') {
-      const hostUser = process.env.HOST_SSH_USER || '';
-      const hostPass = process.env.HOST_SSH_PASS || '';
-      const hostIp = process.env.HOST_SSH_IP || '127.0.0.1';
-      const hostPort = process.env.HOST_SSH_PORT || '22';
-      if (!hostUser || !hostPass) {
-        return resolve({ ok: false, stdout: '', stderr: 'SSH-доступ к локальному хосту не настроен (переменные HOST_SSH_USER / HOST_SSH_PASS)', code: 1 });
-      }
       const escaped = cleanCmd.replace(/'/g, "'\\''");
-      cmd = `sshpass -p '${hostPass}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -p ${hostPort} ${hostUser}@${hostIp} '${escaped}'`;
+      cmd = `sshpass -p tarchanin ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 pavel@192.168.0.6 '${escaped}'`;
     } else {
       const srv = vdsServers.find(s => s.id === target);
       if (!srv) return resolve({ ok: false, stdout: '', stderr: 'VDS сервер не найден', code: 1 });
@@ -2273,19 +2232,11 @@ const server = http.createServer(async (req, res) => {
 
   // 3.1 Перезагрузка локального сервера Ubuntu
   if (pathname === '/api/host/reboot' && req.method === 'POST') {
-    const hostUser = process.env.HOST_SSH_USER || '';
-    const hostPass = process.env.HOST_SSH_PASS || '';
-    const hostIp = process.env.HOST_SSH_IP || '127.0.0.1';
-    if (!hostUser || !hostPass) {
-      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ ok: false, error: 'HOST_SSH_USER and HOST_SSH_PASS not configured' }));
-      return;
-    }
-    addEventLog('warn', `Инициирована перезагрузка хост-сервера (${hostIp})`, 'server');
+    addEventLog('warn', 'Инициирована перезагрузка локального хост-сервера (Ubuntu 192.168.0.6)', 'server');
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ ok: true, message: 'Reboot initiated' }));
     setTimeout(() => {
-      exec(`sshpass -p '${hostPass}' ssh -o StrictHostKeyChecking=no ${hostUser}@${hostIp} 'echo "${hostPass}" | sudo -S systemctl reboot'`, (err) => {
+      exec("sshpass -p tarchanin ssh -o StrictHostKeyChecking=no pavel@192.168.0.6 'echo tarchanin | sudo -S systemctl reboot'", (err) => {
         if (err) console.error('Reboot execution error:', err);
       });
     }, 600);
